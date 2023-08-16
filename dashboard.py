@@ -1,9 +1,10 @@
 #!/usr/bin/env python
 # coding: utf-8
 
-# In[33]:
+# In[9]:
 
 
+import __main__
 import streamlit as st
 import pandas as pd
 import numpy as np
@@ -13,29 +14,41 @@ import matplotlib.pyplot as plt
 import seaborn as sns
 import joblib
 import pickle
+import shap.explainers
 import shap
+import requests 
+import io
+import zipfile
 from zipfile import ZipFile
 plt.style.use('fivethirtyeight')
 #sns.set_style('darkgrid')
 
-# Décorateur pour charger les données en cache
-@st.cache_data
+
+# Décorateur pour charger les données et le modele en cache
+@st.cache_data()
 def load_data():
-    z = ZipFile("X_test.zip")
-    data = pd.read_csv(z.open('X_test.csv'), index_col='SK_ID_CURR', encoding='utf-8')
-    available_ids = data.index.tolist()  # Ajoutez cette ligne pour récupérer les IDs disponibles
-    return data, available_ids
+    data_url = "https://github.com/babi7777/scoring-model-credit-risk/raw/main/X_test.zip"
+    response = requests.get(data_url)
+    with io.BytesIO(response.content) as zip_file:
+        with ZipFile(zip_file, "r") as z:
+            data = pd.read_csv(z.open('X_test.csv'), index_col='SK_ID_CURR', encoding='utf-8')
+            available_ids = data.index.tolist()
+            return data, available_ids
 
-@st.cache_data
+@st.cache_data()
 def load_raw_data():
-    z = ZipFile("X_test_brut.zip")
-    raw_data = pd.read_csv(z.open('X_test_brut.csv'), index_col='SK_ID_CURR', encoding='utf-8')
-    return raw_data
+    data_brut_url = "https://github.com/babi7777/scoring-model-credit-risk/raw/main/X_test_brut.zip"
+    response = requests.get(data_brut_url)
+    with io.BytesIO(response.content) as zip_file:
+        with ZipFile(zip_file, "r") as z:
+            raw_data = pd.read_csv(z.open('X_test_brut.csv'), index_col='SK_ID_CURR', encoding='utf-8')
+            return raw_data
 
-@st.cache_data
+@st.cache_resource()
 def load_model():
-    model_filename = 'scoring-modl-credit-risk/scoring-model-credit-risk/modele_lgbm_over.pkl'
-    model = joblib.load(model_filename)
+    model_url = "https://github.com/babi7777/scoring-model-credit-risk/raw/main/modele_lgbm_over.pkl"
+    response = requests.get(model_url)
+    model = joblib.load(io.BytesIO(response.content))
     return model
 
 def main():
