@@ -4,3 +4,4 @@ cloudpickle
 lightgbm==4.0.0
 numpy
 pandas
+joblib
