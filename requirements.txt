@@ -1,9 +1,6 @@
 mlflow
-cffi==1.15.1
-cloudpickle==2.2.1
+cffi
+cloudpickle
 lightgbm==4.0.0
-matplotlib
 numpy
 pandas
-scikit-learn
-scipy
