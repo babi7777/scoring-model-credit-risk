@@ -1,4 +1,4 @@
-mlflow==2.5.0
+mlflow
 cffi==1.15.1
 cloudpickle==2.2.1
 lightgbm==4.0.0
