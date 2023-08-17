@@ -39,11 +39,23 @@ data = load_data()
 raw_data = load_raw_data()
 model = load_model()
 
+@app.route('/api/clients', methods=['GET'])
+def get_clients():
+    return jsonify({"available_ids": data.index.tolist()})
+
 @app.route('/api/client/<int:id>', methods=['GET'])
 def get_client_data(id):
     if id in raw_data.index:
         client_raw_data = raw_data.loc[id].to_dict()
         return jsonify(client_raw_data)
+    else:
+        return jsonify({"error": "Client ID not found"}), 404
+
+@app.route('/api/client_preprocessed/<int:id>', methods=['GET'])
+def get_client_preprocessed_data(id):
+    if id in data.index:
+        client_data_preprocessed = data.loc[id].to_dict()
+        return jsonify(client_data_preprocessed)
     else:
         return jsonify({"error": "Client ID not found"}), 404
 
