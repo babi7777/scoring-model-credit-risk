@@ -74,19 +74,6 @@ def get_client_preprocessed_data(id):
     else:
         return jsonify({"error": "Client ID not found"}), 404
 
-
-# Point API pour effectuer une prédiction avec le modèle
-@app.route('/api/predict/<int:id>', methods=['GET'])
-def predict(id):
-    if id in available_ids:
-        client_data = data.loc[id]  # Obtenir les données prétraitées du client
-        prediction_proba = model.predict_proba(client_data.values.reshape(1, -1))[:, 1]
-        prediction = "Denied" if prediction_proba >= 0.435 else "Accepted"
-        return jsonify({"prediction": prediction})
-    else:
-        return jsonify({"error": "Client ID not found"}), 404
-
-
 if __name__ == '__main__':
     app.run(debug=True)
 
