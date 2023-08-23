@@ -6,38 +6,56 @@
 
 import streamlit as st
 import pandas as pd
+import numpy as np
+import matplotlib
+matplotlib.use("TkAgg")
+import matplotlib.pyplot as plt
 import requests
+import shap.explainers
 import shap
+import joblib
+import io
+import urllib.request
+plt.style.use('fivethirtyeight')
+
+# Fonction pour obtenir les IDs clients disponibles depuis l'API
+@st.cache_data()
+def get_available_ids(api_base_url):
+    ids_endpoint = f"{api_base_url}/api/clients"
+    response = requests.get(ids_endpoint)
+    available_ids_data = response.json()
+    available_ids = available_ids_data["available_ids"]
+    return available_ids
+
+# Fonction pour obtenir les données d'un client depuis l'API
+@st.cache_data()
+def get_client_data(selected_id):
+    client_data_endpoint = f"{api_base_url}/api/client/{selected_id}"
+    response = requests.get(client_data_endpoint)
+    client_data = response.json()
+    return client_data
+
+# Fonction pour obtenir les données prétraitées d'un client depuis l'API
+@st.cache_data(hash_funcs={hash: hash})
+def get_client_preprocessed_data(selected_id):
+    api_url = f"{api_base_url}/api/client_preprocessed/{selected_id}"
+    response = requests.get(api_url)
+    client_preprocessed_data = response.json()
+    columns = list(client_preprocessed_data.keys())  
+    data = pd.DataFrame.from_dict(client_preprocessed_data, orient='index')
+    return data
+
+# Fonction pour charger le modèle depuis une URL
+@st.cache_resource()
+def load_model(model_url):
+    response = requests.get(model_url)
+    model = joblib.load(io.BytesIO(response.content))
+    return model
 
 def main():
-    api_base_url = "http://35.181.54.91:5000"
-    ids_endpoint = f"{api_base_url}/clients"
-    client_data_endpoint = f"{api_base_url}/client/{{client_id}}"
+    api_base_url = "http://35.181.54.91:5000"    
+    model_url = "https://github.com/babi7777/scoring-model-credit-risk/raw/main/modele_lgbm_over.pkl"
     
-    # Obtenir la liste des ID clients disponibles depuis l'API
-    available_ids_response = requests.get(ids_endpoint)
-    available_ids_data = available_ids_response.json()
-    available_ids = available_ids_data["available_ids"]
-
-    # Sélectionner un ID client dans une liste déroulante
-    selected_id = st.selectbox("Sélectionner un ID client", available_ids)
-
-    # Obtenir les données du client depuis l'API
-    client_info_response = requests.get(client_data_endpoint)
-    client_info = client_info_response.json()
-
-    @st.cache_data()
-    def get_client_preprocessed_data(client_id):
-        api_url = f"{api_base_url}/client_preprocessed/{client_id}"  
-        response = requests.get(api_url)
-        client_preprocessed_data = response.json()
-        data = pd.DataFrame.from_dict(client_preprocessed_data, orient='columns')
-        return data
-
-    # Charger le modèle depuis l'API
-    model_response = requests.get(f"{api_base_url}/model")
-    model = joblib.load(io.BytesIO(model_response.content))
-
     html_temp = """
     <div style="background-color: #475f4e ; padding:10px; border-radius:10px">
     <h1 style="color: #d9ae13; text-align:center">Dashboard de Prédiction de Crédit</h1>
@@ -70,19 +88,30 @@ def main():
         """,
         unsafe_allow_html=True
     )
-            
+    
+    # obtenir les ids
+    available_ids = get_available_ids(api_base_url)
+    
+    # Sélectionner un ID client dans une liste déroulante
+    selected_id = int(st.selectbox("Sélectionner un ID client", available_ids))
+
+    # obtenir les informations du client
+    client_info = get_client_data(selected_id)     
+    
     # Afficher les informations du client
     st.sidebar.subheader("Informations du Client")
-    st.sidebar.write("Age :", int(client_data["DAYS_BIRTH"] / -365), "ans")
-    st.sidebar.write("Revenu total :", client_data["AMT_INCOME_TOTAL"])
-    st.sidebar.write("Montant de crédit demandé :", client_data["AMT_CREDIT"])
-    st.sidebar.write("Montant de l'annuité :", client_data["AMT_ANNUITY"])
-    st.sidebar.write("Montant des biens pour le crédit :", client_data["AMT_GOODS_PRICE"])
+    st.sidebar.write("Age :", int(client_info["DAYS_BIRTH"] / -365), "ans")
+    st.sidebar.write("Revenu total :", client_info["AMT_INCOME_TOTAL"])
+    st.sidebar.write("Montant de crédit demandé :", client_info["AMT_CREDIT"])
+    st.sidebar.write("Montant de l'annuité :", client_info["AMT_ANNUITY"])
+    st.sidebar.write("Montant des biens pour le crédit :", client_info["AMT_GOODS_PRICE"])
     
+    # charger les données et le modele en cache
+    client_data = get_client_preprocessed_data(selected_id) 
+    model = load_model(model_url)
+
     if st.button("Prédire"):
-        # Obtenir les données prétraitées correspondant à l'ID sélectionné depuis l'API
-        client_data = get_client_preprocessed_data(selected_id)        
-        
+                
         # Obtenir la valeur de TARGET pour le client sélectionné à partir des données brutes
         target_value = client_info.loc[selected_id, "TARGET"]
         # Faire une prédiction avec le modèle
