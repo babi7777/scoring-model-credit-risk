@@ -1,16 +1,7 @@
 #!/usr/bin/env python
 # coding: utf-8
 
-# In[2]:
-
-
-import streamlit as st
-import pandas as pd
-import requests
-import shap
-
-
-# In[18]:
+# In[ ]:
 
 
 import streamlit as st
@@ -144,17 +135,4 @@ def main():
 
 if __name__ == '__main__':
     main()
-
-
-# In[13]:
-
-
-
-
-
-# In[19]:
-
-
-requests.get(f"https://github.com/babi7777/scoring-model-credit-risk/raw/main/api.py")
-    
 
