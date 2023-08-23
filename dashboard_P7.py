@@ -10,7 +10,7 @@ import requests
 import shap
 
 def main():
-    api_base_url = "https://github.com/babi7777/scoring-model-credit-risk/raw/main/api.py"
+    api_base_url = "http://35.181.54.91:5000"
     ids_endpoint = f"{api_base_url}/clients"
     client_data_endpoint = f"{api_base_url}/client/{{client_id}}"
     
