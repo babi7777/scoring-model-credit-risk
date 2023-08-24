@@ -18,9 +18,6 @@ import io
 import urllib.request
 plt.style.use('fivethirtyeight')
 
-# Création de l'objet app
-app = st.app(__name__)
-
 # Fonction pour obtenir les IDs clients disponibles depuis l'API
 @st.cache_data()
 def get_available_ids(api_base_url):
