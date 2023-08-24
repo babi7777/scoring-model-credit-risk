@@ -114,8 +114,6 @@ def main():
 
     if st.button("Prédire"):
                 
-        # Obtenir la valeur de TARGET pour le client sélectionné à partir des données brutes
-        target_value = client_info.loc[selected_id, "TARGET"]
         # Faire une prédiction avec le modèle
         prediction_proba = model.predict_proba(client_data.values.reshape(1, -1))[:, 1]
         prediction = "Refusé" if prediction_proba >= 0.435 else "Accepté"
@@ -162,7 +160,7 @@ def main():
         client_data_df = pd.DataFrame([client_data], columns=client_data.index)
         shap_values_client = explainer.shap_values(client_data_df)
         shap.force_plot(explainer.expected_value[1], shap_values_client[1][0], client_data, matplotlib=True)
-       
+
 
 if __name__ == '__main__':
     main()
