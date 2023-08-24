@@ -18,6 +18,9 @@ import io
 import urllib.request
 plt.style.use('fivethirtyeight')
 
+api_base_url = "http://35.181.54.91:5000"    
+model_url = "https://github.com/babi7777/scoring-model-credit-risk/raw/main/modele_lgbm_over.pkl"
+
 # Fonction pour obtenir les IDs clients disponibles depuis l'API
 @st.cache_data()
 def get_available_ids(api_base_url):
@@ -53,7 +56,6 @@ def load_model(model_url):
     return model
 
 def main():
-    api_base_url = "http://35.181.54.91:5000"    
     model_url = "https://github.com/babi7777/scoring-model-credit-risk/raw/main/modele_lgbm_over.pkl"
     
     html_temp = """
