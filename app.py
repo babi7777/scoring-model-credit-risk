@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # coding: utf-8
 
-# In[39]:
+# In[42]:
 
 
 import streamlit as st
@@ -106,9 +106,7 @@ def main():
     
     # obtenir les ids
     available_ids = get_available_ids(api_base_url)
-
-    new_data, new_ids = load_new_data()
-       
+           
     # Sélectionner un ID client dans une liste déroulante
     selected_id = int(st.selectbox("Sélectionner un ID client", available_ids))
     
@@ -133,7 +131,7 @@ def main():
     target_value = client_info["TARGET"]
     # Faire une prédiction avec le modèle
     response = requests.get(f"{api_base_url}/api/predict/{selected_id}")
-    prediction_data = response.json()
+    prediction_data = response.json()    
     prediction_proba = prediction_data["probability"]
     prediction_decision = prediction_data["decision"]
 
@@ -146,7 +144,7 @@ def main():
         st.markdown(f"<p style='font-size:18px; font-weight:bold; color:red;'>{prediction_decision}</p>", unsafe_allow_html=True)
                
     # Afficher les messages correspondants
-    if prediction == "Denied":
+    if prediction_decision == "Denied":
         st.write("La prédiction indique un refus de crédit.")            
     else:
         st.write("La prédiction indique une acceptation de crédit.")  
@@ -162,7 +160,22 @@ def main():
         shap_values_client = explainer.shap_values(client_data.T)  
         shap_value = shap_values_client[1][0]      
         shap.force_plot(explainer.expected_value[1], shap_value, client_data.T, matplotlib=True)
-
+       
+    # Fonction pour obtenir les données prétraitées d'un nouveau client
+    @st.cache_data(hash_funcs={hash: hash})
+    def load_new_data():
+        new_url = "https://github.com/babi7777/scoring-model-credit-risk/raw/main/data_test.zip"
+        response = requests.get(new_url)
+        with io.BytesIO(response.content) as zip_file:
+            with ZipFile(zip_file, "r") as z:
+                all_new_data = pd.read_csv(z.open('data_test.csv'), index_col='SK_ID_CURR', encoding='utf-8')
+                # Sélectionner un échantillon de 500 nouveaux clients
+                new_data = all_new_data.sample(n=500, random_state=42)
+                new_ids = new_data.index.tolist()
+                return new_data, new_ids
+    
+    new_data, new_ids = load_new_data() 
+    
     # Sélectionner un ID d'un nouveau client dans une liste déroulante
     selected_new_id = st.selectbox("Sélectionner un ID d'un nouveau client", new_ids)
 
