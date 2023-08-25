@@ -147,8 +147,7 @@ def main():
         shap_value = shap_values_client[1][0]      
         shap.force_plot(explainer.expected_value[1], shap_value, client_data.T, matplotlib=True)
        
-    # Fonction pour obtenir les données prétraitées d'un nouveau client
-    @st.cache_data(hash_funcs={hash: hash})
+    # Fonction pour obtenir les données prétraitées d'un nouveau client    
     def load_new_data():
         new_url = "https://github.com/babi7777/scoring-model-credit-risk/raw/main/data_test.zip"
         response = requests.get(new_url)
