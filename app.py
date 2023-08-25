@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # coding: utf-8
 
-# In[ ]:
+# In[31]:
 
 
 import streamlit as st
@@ -109,14 +109,14 @@ def main():
     st.sidebar.write("Montant des biens pour le crédit :", client_info["AMT_GOODS_PRICE"])
     
     # charger les données et le modele en cache
-    client_data_json = get_client_preprocessed_data(selected_id) 
-    client_data = pd.DataFrame.from_dict(client_data_json, orient='index', columns=['values']).T
+    client_data_json = get_client_preprocessed_data(selected_id)       
+    client_data = pd.DataFrame.from_dict(client_data_json)  
     model = load_model(model_url)
 
     if st.button("Prédire"):
                 
         # Obtenir la valeur de TARGET pour le client sélectionné depuis le JSON
-        target_value = client_info[selected_id]["TARGET"]
+        target_value = client_info["TARGET"]
         # Faire une prédiction avec le modèle
         prediction_proba = model.predict_proba(client_data.values.reshape(1, -1))[:, 1]
         prediction = "Refusé" if prediction_proba >= 0.435 else "Accepté"
@@ -154,18 +154,17 @@ def main():
                 st.write("La valeur de TARGET réelle confirme une non-défaillance de paiement.")
             else:
                 st.write("La valeur de TARGET réelle indique un défaut de paiement.")
-    
+                
+    if st.button("Interprétation"):
         # Calculer les valeurs SHAP pour le client        
         explainer = shap.TreeExplainer(model)        
     
         # Afficher l'interprétation SHAP des features        
-        st.subheader("Interprétation SHAP des Features")        
-        client_data_df = pd.DataFrame([client_data], columns=client_data.index)
-        shap_values_client = explainer.shap_values(client_data_df)
-        shap.force_plot(explainer.expected_value[1], shap_values_client[1][0], client_data, matplotlib=True)
-
-    if st._is_running_with_streamlit():
-        main()
+        st.subheader("Interprétation SHAP des Features")    
+    
+        shap_values_client = explainer.shap_values(client_data.T)  
+        shap_value = shap_values_client[1][0]      
+        shap.force_plot(explainer.expected_value[1], shap_value, client_data.T, matplotlib=True)
 
 if __name__ == '__main__':
     main()
