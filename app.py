@@ -153,9 +153,7 @@ def main():
         response = requests.get(new_url)
         with io.BytesIO(response.content) as zip_file:
             with ZipFile(zip_file, "r") as z:
-                all_new_data = pd.read_csv(z.open('data_test.csv'), index_col='SK_ID_CURR', encoding='utf-8')
-                # Sélectionner un échantillon de 100 nouveaux clients
-                new_data = all_new_data.sample(n=100, random_state=42)
+                new_data = pd.read_csv(z.open('data_test.csv'), index_col='SK_ID_CURR', encoding='utf-8')                
                 new_ids = new_data.index.tolist()
                 return new_data, new_ids
     
