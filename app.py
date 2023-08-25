@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # coding: utf-8
 
-# In[34]:
+# In[ ]:
 
 
 import streamlit as st
@@ -51,13 +51,14 @@ def get_client_preprocessed_data(selected_id):
     
 # Fonction pour obtenir les données prétraitées d'un nouveau client
 @st.cache_data(hash_funcs={hash: hash})
-def load_new_data(new_url):
+def load_new_data():
     new_url = "https://github.com/babi7777/scoring-model-credit-risk/raw/main/data_test.zip"
     response = requests.get(new_url)
     with io.BytesIO(response.content) as zip_file:
         with ZipFile(zip_file, "r") as z:
             new_data = pd.read_csv(z.open('data_test.csv'), index_col='SK_ID_CURR', encoding='utf-8')
-            return new_data
+            new_id = new_data.index.tolist()
+            return new_data, new_ids
             
 def load_model(model_url):
     model_url = "https://github.com/babi7777/scoring-model-credit-risk/raw/main/modele_lgbm_over.pkl"
@@ -103,10 +104,12 @@ def main():
     
     # obtenir les ids
     available_ids = get_available_ids(api_base_url)
-    
+
+    new_data, new_ids = load_new_data()
+       
     # Sélectionner un ID client dans une liste déroulante
     selected_id = int(st.selectbox("Sélectionner un ID client", available_ids))
-
+    
     # obtenir les informations du client
     client_info = get_client_data(selected_id)     
     
@@ -123,45 +126,29 @@ def main():
     client_data = pd.DataFrame.from_dict(client_data_json)  
     model = load_model(model_url)
 
-    # Ajouter un bouton pour afficher la prédiction pour les clients existants
-    if st.button("Afficher Prédiction pour Clients Existants"):
-        # Obtenir la valeur de TARGET pour le client sélectionné depuis le JSON
-        target_value = client_info["TARGET"]
-        # Faire une prédiction avec le modèle
-        response = requests.get(f"{api_base_url}/api/predict/{selected_id}")
-        prediction_data = response.json()
-        prediction_proba = prediction_data["probability"]
-        prediction_decision = prediction_data["decision"]
+    
+    # Obtenir la valeur de TARGET pour le client sélectionné depuis le JSON
+    target_value = client_info["TARGET"]
+    # Faire une prédiction avec le modèle
+    response = requests.get(f"{api_base_url}/api/predict/{selected_id}")
+    prediction_data = response.json()
+    prediction_proba = prediction_data["probability"]
+    prediction_decision = prediction_data["decision"]
 
-        # Afficher la prédiction
-        st.subheader("Résultat de Prédiction")
-        st.write(f"Probabilité de Prédiction : {prediction_proba:.4f}")
-        if prediction_decision == "Accepted":
-            st.markdown(f"<p style='font-size:18px; font-weight:bold; color:green;'>{prediction_decision}</p>", unsafe_allow_html=True)
-        else:
-            st.markdown(f"<p style='font-size:18px; font-weight:bold; color:red;'>{prediction_decision}</p>", unsafe_allow_html=True)
+    # Afficher la prédiction
+    st.subheader("Résultat de Prédiction")
+    st.write(f"Probabilité de Prédiction : {prediction_proba:.4f}")
+    if prediction_decision == "Accepted":
+        st.markdown(f"<p style='font-size:18px; font-weight:bold; color:green;'>{prediction_decision}</p>", unsafe_allow_html=True)
+    else:
+        st.markdown(f"<p style='font-size:18px; font-weight:bold; color:red;'>{prediction_decision}</p>", unsafe_allow_html=True)
                
-        # Afficher les messages correspondants
-        if prediction == "Denied":
-            st.write("La prédiction indique un refus de crédit.")            
-        else:
-            st.write("La prédiction indique une acceptation de crédit.")  
-        st.subheader("Prédiction Affichée : Show Prediction")
-
-    # Ajouter un bouton pour prédire de nouveaux clients en utilisant le modèle
-    if st.button("Prédire pour Nouveaux Clients"): 
-        model = load_model(model_url)
-        new_data = load_new_data(new_url)
-        prediction_proba = model.predict_proba(new_data.values.reshape(1, -1))[:, 1]
-        prediction = "Denied" if prediction_proba >= 0.435 else "Accepted"
-        
-        st.subheader("Prédiction : Predict")    
-        st.write(f"Probabilité de Prédiction : {prediction_proba:.4f}")
-        if prediction == "Accepted":
-            st.markdown(f"<p style='font-size:18px; font-weight:bold; color:green;'>{prediction_decision}</p>", unsafe_allow_html=True)
-        else:
-            st.markdown(f"<p style='font-size:18px; font-weight:bold; color:red;'>{prediction_decision}</p>", unsafe_allow_html=True)
-                  
+    # Afficher les messages correspondants
+    if prediction == "Denied":
+        st.write("La prédiction indique un refus de crédit.")            
+    else:
+        st.write("La prédiction indique une acceptation de crédit.")  
+    st.subheader("Prédiction Affichée : Show Prediction")                  
                 
     if st.button("Interprétation"):
         # Calculer les valeurs SHAP pour le client        
@@ -173,6 +160,23 @@ def main():
         shap_values_client = explainer.shap_values(client_data.T)  
         shap_value = shap_values_client[1][0]      
         shap.force_plot(explainer.expected_value[1], shap_value, client_data.T, matplotlib=True)
+
+    # Sélectionner un ID d'un nouveau client dans une liste déroulante
+    selected_new_id = st.selectbox("Sélectionner un ID d'un nouveau client", new_ids)
+
+    # Ajouter un bouton pour prédire de nouveaux clients en utilisant le modèle
+    if st.button("Prédire pour Nouveaux Clients"): 
+        model = load_model(model_url)
+        new_data = load_new_data(new_url)
+        new_prediction_proba = model.predict_proba(new_data.values.reshape(1, -1))[:, 1]
+        new_prediction = "Denied" if new_prediction_proba >= 0.435 else "Accepted"
+        
+        st.subheader("Prédiction : Predict")    
+        st.write(f"Probabilité de Prédiction : {new_prediction_proba:.4f}")
+        if new_prediction == "Accepted":
+            st.markdown(f"<p style='font-size:18px; font-weight:bold; color:green;'>{new_prediction}</p>", unsafe_allow_html=True)
+        else:
+            st.markdown(f"<p style='font-size:18px; font-weight:bold; color:red;'>{new_prediction}</p>", unsafe_allow_html=True)
 
 if __name__ == '__main__':
     main()
