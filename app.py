@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # coding: utf-8
 
-# In[ ]:
+# In[39]:
 
 
 import streamlit as st
@@ -57,7 +57,9 @@ def load_new_data():
     with io.BytesIO(response.content) as zip_file:
         with ZipFile(zip_file, "r") as z:
             new_data = pd.read_csv(z.open('data_test.csv'), index_col='SK_ID_CURR', encoding='utf-8')
-            new_id = new_data.index.tolist()
+            # Sélectionner un échantillon de 1000 nouveaux clients
+            new_data = new_data.sample(n=1000, random_state=42)
+            new_ids = new_data.index.tolist()
             return new_data, new_ids
             
 def load_model(model_url):
@@ -167,7 +169,7 @@ def main():
     # Ajouter un bouton pour prédire de nouveaux clients en utilisant le modèle
     if st.button("Prédire pour Nouveaux Clients"): 
         model = load_model(model_url)
-        new_data = load_new_data(new_url)
+        new_data = load_new_data()
         new_prediction_proba = model.predict_proba(new_data.values.reshape(1, -1))[:, 1]
         new_prediction = "Denied" if new_prediction_proba >= 0.435 else "Accepted"
         
