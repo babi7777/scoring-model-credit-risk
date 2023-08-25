@@ -82,7 +82,7 @@ def predict(id):
         client_data = data.loc[id]  # Obtenir les données prétraitées du client
         prediction_proba = model.predict_proba(client_data.values.reshape(1, -1))[:, 1]
         prediction = "Denied" if prediction_proba >= 0.435 else "Accepted"
-        return jsonify({"prediction": prediction})
+        return jsonify({"probability": prediction_proba, "decision": prediction})
     else:
         return jsonify({"error": "Client ID not found"}), 404
 
