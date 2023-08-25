@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # coding: utf-8
 
-# In[32]:
+# In[34]:
 
 
 import streamlit as st
@@ -58,6 +58,12 @@ def load_new_data(new_url):
         with ZipFile(zip_file, "r") as z:
             new_data = pd.read_csv(z.open('data_test.csv'), index_col='SK_ID_CURR', encoding='utf-8')
             return new_data
+            
+def load_model(model_url):
+    model_url = "https://github.com/babi7777/scoring-model-credit-risk/raw/main/modele_lgbm_over.pkl"
+    response = requests.get(model_url)
+    model = joblib.load(io.BytesIO(response.content))
+    return model 
     
 def main():
     model_url = "https://github.com/babi7777/scoring-model-credit-risk/raw/main/modele_lgbm_over.pkl"
@@ -143,7 +149,8 @@ def main():
         st.subheader("Prédiction Affichée : Show Prediction")
 
     # Ajouter un bouton pour prédire de nouveaux clients en utilisant le modèle
-    if st.button("Prédire pour Nouveaux Clients"):        
+    if st.button("Prédire pour Nouveaux Clients"): 
+        model = load_model(model_url)
         new_data = load_new_data(new_url)
         prediction_proba = model.predict_proba(new_data.values.reshape(1, -1))[:, 1]
         prediction = "Denied" if prediction_proba >= 0.435 else "Accepted"
