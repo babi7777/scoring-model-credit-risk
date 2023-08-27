@@ -11,7 +11,6 @@ import matplotlib
 matplotlib.use("TkAgg")
 import matplotlib.pyplot as plt
 import requests
-import shap.explainers
 import shap
 import joblib
 import io
@@ -49,15 +48,13 @@ def get_client_preprocessed_data(selected_id):
     data = pd.DataFrame.from_dict(client_preprocessed_data, orient='index')
     return data
            
-def load_model(model_url):
-    model_url = "https://github.com/babi7777/scoring-model-credit-risk/raw/main/modele_lgbm_over.pkl"
+def load_model(model_url):    
     response = requests.get(model_url)
     model = joblib.load(io.BytesIO(response.content))
     return model 
     
 def main():
-    model_url = "https://github.com/babi7777/scoring-model-credit-risk/raw/main/modele_lgbm_over.pkl"
-    
+        
     html_temp = """
     <div style="background-color: #475f4e ; padding:10px; border-radius:10px">
     <h1 style="color: #d9ae13; text-align:center">Dashboard de Prédiction de Crédit</h1>
@@ -151,11 +148,14 @@ def main():
     def load_new_data():
         new_url = "https://github.com/babi7777/scoring-model-credit-risk/raw/main/data_test.zip"
         response = requests.get(new_url)
+    
         with io.BytesIO(response.content) as zip_file:
             with ZipFile(zip_file, "r") as z:
-                new_data = pd.read_csv(z.open('data_test.csv'), index_col='SK_ID_CURR', encoding='utf-8')                
+                z.extractall()  # Extraction du contenu du fichier ZIP
+                new_data = pd.read_csv('data_test.csv', index_col='SK_ID_CURR', encoding='utf-8')
                 new_ids = new_data.index.tolist()
-                return new_data, new_ids
+    
+        return new_data, new_ids
     
     # charger l'échantillon des données pour les nouveaux clients
     new_data, new_ids = load_new_data()
@@ -164,8 +164,7 @@ def main():
     selected_new_id = st.selectbox("Sélectionner un ID d'un nouveau client", new_ids)
     
     # Ajouter un bouton pour prédire de nouveaux clients en utilisant le modèle
-    if st.button("Prédire pour Nouveaux Clients"):
-        model = load_model(model_url)
+    if st.button("Prédire pour Nouveaux Clients"):       
     
         if selected_new_id in new_ids:
             new_client_data = new_data.loc[selected_new_id]
