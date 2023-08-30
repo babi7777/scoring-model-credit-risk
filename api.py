@@ -6,7 +6,6 @@
 
 from flask import Flask, request, jsonify
 import pandas as pd
-import multiprocessing
 from zipfile import ZipFile
 import joblib
 import requests
@@ -37,15 +36,6 @@ def load_model():
     response = requests.get(model_url)
     model = joblib.load(io.BytesIO(response.content))
     return model
-def main():
-    process_data = multiprocessing.Process(target=load_data)
-    process_model = multiprocessing.Process(target=load_model)
-
-    process_data.start()
-    process_model.start()
-
-    process_data.join()
-    process_model.join()
     
 data, available_ids = load_data()
 raw_data = load_raw_data()
@@ -65,16 +55,6 @@ def get_client_data(id):
     else:
         return jsonify({"error": "Client ID not found"}), 404
 
-# Point API pour fournir les données prétraitées d'un client spécifique
-@app.route('/api/client_preprocessed/<int:id>', methods=['GET'])
-def get_client_preprocessed_data(id):
-    if id in available_ids:
-        client_data_preprocessed = data.loc[id].to_dict()
-        return jsonify(client_data_preprocessed)
-    else:
-        return jsonify({"error": "Client ID not found"}), 404
-
-
 # Point API pour effectuer une prédiction avec le modèle
 @app.route('/api/predict/<int:id>', methods=['GET'])
 def predict(id):
@@ -89,4 +69,3 @@ def predict(id):
 
 if __name__ == '__main__':
     app.run(debug=True)
-
