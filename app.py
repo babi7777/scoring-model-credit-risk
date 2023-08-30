@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # coding: utf-8
 
-# In[43]:
+# In[42]:
 
 
 import streamlit as st
@@ -42,11 +42,19 @@ def get_client_data(selected_id):
 @st.cache_data(hash_funcs={hash: hash})
 def get_client_preprocessed_data(selected_id):
     api_url = f"{api_base_url}/api/client_preprocessed/{selected_id}"
-    response = requests.get(api_url)
-    client_preprocessed_data = response.json()
-    columns = list(client_preprocessed_data.keys())  
-    data = pd.DataFrame.from_dict(client_preprocessed_data, orient='index')
-    return data
+    response = requests.get(api_url)    
+    try:
+        response_data = response.json()
+        if isinstance(response_data, dict):
+            client_preprocessed_data = response_data
+            columns = list(client_preprocessed_data.keys())
+            data = pd.DataFrame.from_dict(client_preprocessed_data, orient='index')
+            return data
+        else:
+            raise ValueError("Invalid JSON response")
+    except Exception as e:
+        print("Error decoding JSON response:", e)
+        return None
            
 def load_model(model_url):    
     response = requests.get(model_url)
@@ -133,17 +141,6 @@ def main():
     else:
         st.write("La prédiction indique une acceptation de crédit.")                      
                 
-    if st.button("Interprétation"):
-        # Calculer les valeurs SHAP pour le client        
-        explainer = shap.TreeExplainer(model)        
-    
-        # Afficher l'interprétation SHAP des features        
-        st.subheader("Interprétation SHAP des Features")    
-    
-        shap_values_client = explainer.shap_values(client_data.T)  
-        shap_value = shap_values_client[1][0]      
-        shap.force_plot(explainer.expected_value[1], shap_value, client_data.T, matplotlib=True)
 
 if __name__ == '__main__':
     main()
-
