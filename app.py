@@ -18,7 +18,7 @@ import urllib.request
 from zipfile import ZipFile
 plt.style.use('fivethirtyeight')
 
-api_base_url = "http://35.181.54.91:5000"    
+api_base_url = "35.181.54.91:5000"    
 model_url = "https://github.com/babi7777/scoring-model-credit-risk/raw/main/modele_lgbm_over.pkl"
 
 # Fonction pour obtenir les IDs clients disponibles depuis l'API
