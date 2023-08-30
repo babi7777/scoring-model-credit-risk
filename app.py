@@ -143,42 +143,6 @@ def main():
         shap_values_client = explainer.shap_values(client_data.T)  
         shap_value = shap_values_client[1][0]      
         shap.force_plot(explainer.expected_value[1], shap_value, client_data.T, matplotlib=True)
-       
-    # Fonction pour obtenir les données prétraitées d'un nouveau client    
-    def load_new_data():
-        new_url = "https://github.com/babi7777/scoring-model-credit-risk/raw/main/data_test.zip"
-        response = requests.get(new_url)
-    
-        with io.BytesIO(response.content) as zip_file:
-            with ZipFile(zip_file, "r") as z:
-                z.extractall()  # Extraction du contenu du fichier ZIP
-                new_data = pd.read_csv('data_test.csv', index_col='SK_ID_CURR', encoding='utf-8')
-                new_ids = new_data.index.tolist()
-    
-        return new_data, new_ids
-    
-    # charger l'échantillon des données pour les nouveaux clients
-    new_data, new_ids = load_new_data()
-    
-    # Sélectionner un ID d'un nouveau client dans une liste déroulante
-    selected_new_id = st.selectbox("Sélectionner un ID d'un nouveau client", new_ids)
-    
-    # Ajouter un bouton pour prédire de nouveaux clients en utilisant le modèle
-    if st.button("Prédire pour Nouveaux Clients"):       
-    
-        if selected_new_id in new_ids:
-            new_client_data = new_data.loc[selected_new_id]
-            new_prediction_proba = model.predict_proba(new_client_data.values.reshape(1, -1))[:, 1]
-            new_prediction = "Denied" if new_prediction_proba >= 0.435 else "Accepted"
-        
-            st.subheader("Prédiction : ")
-            st.write(f"Probabilité de faillite : {new_prediction_proba[0]:.4f}")
-            if new_prediction == "Accepted":
-                st.markdown(f"<p style='font-size:18px; font-weight:bold; color:green;'>{new_prediction}</p>", unsafe_allow_html=True)
-            else:
-                st.markdown(f"<p style='font-size:18px; font-weight:bold; color:red;'>{new_prediction}</p>", unsafe_allow_html=True)
-        else:
-            st.warning("ID de client nouveau invalide. Veuillez sélectionner un ID valide.")
 
 if __name__ == '__main__':
     main()
